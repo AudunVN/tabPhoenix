@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script>
+			var deadTreshold = 3 /* seconds */;
+			var loopInterval = 1 /* seconds */;
+			var state = "slave";
+			var counter = 0;
+			var pageURL = window.location.href;
+			
+			console.log("[SLAVE] New tab opened - state set to slave");
+			
+			function readCounterValue() {
+				var counterString = document.cookie.match(/(BACKUP: [^;]*)/)[0].split("BACKUP: ")[0].split(" ")[1];
+				if (counterString = "NaN") {
+					return 0;
+				} else {
+					return parseInt(counterString);
+				}
+			}
+			
+			function backupIsRecent() {
+				var backupTimestamp = parseInt(document.cookie.match(/(BACKUP: [^;]*)/)[0].split("BACKUP: ")[0].split(" ")[0]);
+				console.log(backupTimestamp);
+				console.log(parseInt(Date.now()) - backupTimestamp);
+				return (5000*deadTreshold >= Date.now() - backupTimestamp);
+			}
+			
+			function storeBackup(counter) {
+				document.cookie = "BACKUP: " + Date.now() + " " + counter;
+			}
+			
+			if (!document.cookies) {
+				storeBackup(counter);
+			}
+			
+			function loop() {
+				if (!backupIsRecent() && state == "slave") {
+					console.log("[SLAVE] Master timed out, assumed dead - state set to master");
+					window.open(window.location.href);
+					console.log("[MASTER] Tried to open new backup tab");
+					state = "master";
+					counter = readCounterValue();
+				}
+				if (state == "master") {
+					console.log("[MASTER] Counter value: "+ counter);
+					counter++;
+					storeBackup(counter);
+				}
+				console.log(document.cookie);
+			}
+			
+			setInterval(loop, 1000*loopInterval);
+		</script>
+	</head>
+	<body>
+		<div id="output"></div>
+	</body>
+</html>
