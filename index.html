@@ -11,26 +11,19 @@
 			console.log("[SLAVE] New tab opened - state set to slave");
 			
 			function readCounterValue() {
-				var counterString = document.cookie.match(/(BACKUP: [^;]*)/)[0].split("BACKUP: ")[0].split(" ")[1];
-				if (counterString = "NaN") {
-					return 0;
-				} else {
-					return parseInt(counterString);
-				}
+				return parseInt(localStorage.getItem("tabState").split(" ")[1]);
 			}
 			
 			function backupIsRecent() {
-				var backupTimestamp = parseInt(document.cookie.match(/(BACKUP: [^;]*)/)[0].split("BACKUP: ")[0].split(" ")[0]);
-				console.log(backupTimestamp);
-				console.log(parseInt(Date.now()) - backupTimestamp);
-				return (5000*deadTreshold >= Date.now() - backupTimestamp);
+				var backupTimestamp = parseInt(localStorage.getItem("tabState").split(" ")[0]);
+				return (1000*deadTreshold >= Date.now() - backupTimestamp);
 			}
 			
 			function storeBackup(counter) {
-				document.cookie = "BACKUP: " + Date.now() + " " + counter;
+				localStorage.setItem("tabState", Date.now() + " " + counter);
 			}
 			
-			if (!document.cookies) {
+			if (!localStorage.getItem("tabState")) {
 				storeBackup(counter);
 			}
 			
@@ -40,14 +33,15 @@
 					window.open(window.location.href);
 					console.log("[MASTER] Tried to open new backup tab");
 					state = "master";
-					counter = readCounterValue();
 				}
 				if (state == "master") {
 					console.log("[MASTER] Counter value: "+ counter);
 					counter++;
 					storeBackup(counter);
+				} else {
+					counter = readCounterValue();
 				}
-				console.log(document.cookie);
+				document.getElementById("output").innerHTML = "[" + state + "]: " + counter;
 			}
 			
 			setInterval(loop, 1000*loopInterval);
